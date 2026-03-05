@@ -1,0 +1,77 @@
+# =============================================================================
+# PureAgile CI/CD Integration — Test Workflow File
+# =============================================================================
+# Place this file in your GitHub repo at:  .github/workflows/pureagile-test.yml
+#
+# The job IDs and names in this file are what you register in PureAgile's
+# Development Settings → CI/CD Workflow Integration section.
+# =============================================================================
+
+name: PureAgile CI/CD Test Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - "PA-*"          # Branches matching your naming convention
+  pull_request:
+    branches:
+      - main
+      - develop
+
+jobs:
+  build_and_test:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+  deploy_staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: build_and_test
+    if: github.ref == 'refs/heads/develop'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy
+        run: echo "Deploying to staging..."
+        # Replace with your actual deploy step, e.g.:
+        # run: ./scripts/deploy.sh staging
+
+      - name: Notify
+        run: echo "Staging deployment complete ✅"
+
+  deploy_production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: build_and_test
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy
+        run: echo "Deploying to production..."
+        # Replace with your actual deploy step
+
+      - name: Notify
+        run: echo "Production deployment complete ✅"
